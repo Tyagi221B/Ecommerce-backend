@@ -1,32 +1,40 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const schema = new mongoose.Schema(
+const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Please enter Name"],
+      required: [true, 'Please enter Name'],
     },
     photo: {
       type: String,
-      required: [true, "Please enter Photo"],
+      required: [true, 'Please enter Photo'],
     },
     price: {
       type: Number,
-      required: [true, "Please enter Price"],
+      required: [true, 'Please enter Price'],
     },
     stock: {
       type: Number,
-      required: [true, "Please enter Stock"],
+      required: [true, 'Please enter Stock'],
     },
     category: {
       type: String,
-      required: [true, "Please enter Category"],
+      required: [true, 'Please enter Category'],
       trim: true,
     },
+    description: {
+      type: String,
+      required: [true, 'Please enter Description'],
+      trim: true,
+      default: '',
+    },
+
   },
   {
     timestamps: true,
   }
 );
 
-export const Product = mongoose.model("Product", schema);
+const Product = mongoose.model('Product', productSchema);
+export default Product;

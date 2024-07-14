@@ -5,12 +5,11 @@ import {
   NewProductRequestBody,
   SearchRequestQuery,
 } from "../types/types.js";
-import { Product } from "../models/product.js";
+import Product from "../models/product.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { rm } from "fs";
 import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
-// import { faker } from "@faker-js/faker";
 
 // Revalidate on New,Update,Delete Product & on New Order
 export const getlatestProducts = TryCatch(async (req, res, next) => {
@@ -83,12 +82,13 @@ export const getSingleProduct = TryCatch(async (req, res, next) => {
 
 export const newProduct = TryCatch(
   async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
-    const { name, price, stock, category } = req.body;
+    const { name, price, stock, category, description } = req.body;
+    console.log(req);
     const photo = req.file;
 
     if (!photo) return next(new ErrorHandler("Please add Photo", 400));
 
-    if (!name || !price || !stock || !category) {
+    if (!name || !price || !stock || !category || !description) {
       rm(photo.path, () => {
         console.log("Deleted");
       });
@@ -101,6 +101,7 @@ export const newProduct = TryCatch(
       price,
       stock,
       category: category.toLowerCase(),
+      description,
       photo: photo.path,
     });
 
@@ -115,7 +116,7 @@ export const newProduct = TryCatch(
 
 export const updateProduct = TryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const { name, price, stock, category } = req.body;
+  const { name, price, stock, category, description } = req.body;
   const photo = req.file;
   const product = await Product.findById(id);
 
@@ -132,6 +133,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
   if (price) product.price = price;
   if (stock) product.stock = stock;
   if (category) product.category = category;
+  if (description) product.description = description;
 
   await product.save();
 
@@ -214,37 +216,3 @@ export const getAllProducts = TryCatch(
     });
   }
 );
-
-// const generateRandomProducts = async (count: number = 10) => {
-//   const products = [];
-
-//   for (let i = 0; i < count; i++) {
-//     const product = {
-//       name: faker.commerce.productName(),
-//       photo: "uploads\\5ba9bd91-b89c-40c2-bb8a-66703408f986.png",
-//       price: faker.commerce.price({ min: 1500, max: 80000, dec: 0 }),
-//       stock: faker.commerce.price({ min: 0, max: 100, dec: 0 }),
-//       category: faker.commerce.department(),
-//       createdAt: new Date(faker.date.past()),
-//       updatedAt: new Date(faker.date.recent()),
-//       __v: 0,
-//     };
-
-//     products.push(product);
-//   }
-
-//   await Product.create(products);
-
-//   console.log({ succecss: true });
-// };
-
-// const deleteRandomsProducts = async (count: number = 10) => {
-//   const products = await Product.find({}).skip(2);
-
-//   for (let i = 0; i < products.length; i++) {
-//     const product = products[i];
-//     await product.deleteOne();
-//   }
-
-//   console.log({ succecss: true });
-// };
