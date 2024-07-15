@@ -18,7 +18,7 @@ export const getlatestProducts = TryCatch(async (req, res, next) => {
   if (myCache.has("latest-products"))
     products = JSON.parse(myCache.get("latest-products") as string);
   else {
-    products = await Product.find({}).sort({ createdAt: -1 }).limit(5);
+    products = await Product.find({}).sort({ createdAt: -1 }).limit(100);
     myCache.set("latest-products", JSON.stringify(products));
   }
 
@@ -84,7 +84,6 @@ export const newProduct = TryCatch(
   async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
     const { name, price, stock, category, description } = req.body;
     const photo = req.file;
-    console.log("hello", req.body);
 
     if (!photo) return next(new ErrorHandler("Please add Photo", 400));
 
