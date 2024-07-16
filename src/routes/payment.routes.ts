@@ -6,7 +6,7 @@ import {
   createPaymentIntent,
   deleteCoupon,
   newCoupon,
-} from "../controllers/payment.js";
+} from "../controllers/payment.controller.js";
 
 const app = express.Router();
 

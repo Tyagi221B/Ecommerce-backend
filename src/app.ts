@@ -8,11 +8,11 @@ import Stripe from "stripe";
 import cors from "cors";
 
 // Importing Routes
-import userRoute from "./routes/user.js";
-import productRoute from "./routes/products.js";
-import orderRoute from "./routes/order.js";
-import paymentRoute from "./routes/payment.js";
-import dashboardRoute from "./routes/stats.js";
+import userRoute from "./routes/user.routes.js";
+import productRoute from "./routes/products.routes.js";
+import orderRoute from "./routes/order.routes.js";
+import paymentRoute from "./routes/payment.routes.js";
+import dashboardRoute from "./routes/stats.routes.js";
 
 config({
   path: "./.env",

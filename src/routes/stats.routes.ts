@@ -5,7 +5,7 @@ import {
   getDashboardStats,
   getLineCharts,
   getPieCharts,
-} from "../controllers/stats.js";
+} from "../controllers/stats.controller.js";
 
 const app = express.Router();
 

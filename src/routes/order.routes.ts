@@ -7,7 +7,7 @@ import {
   myOrders,
   newOrder,
   processOrder,
-} from "../controllers/order.js";
+} from "../controllers/order.controller.js";
 
 const app = express.Router();
 

@@ -4,7 +4,7 @@ import {
   getAllUsers,
   getUser,
   newUser,
-} from "../controllers/user.js";
+} from "../controllers/user.controller.js";
 import { adminOnly } from "../middlewares/auth.js";
 
 const app = express.Router();

@@ -9,7 +9,7 @@ import {
   getlatestProducts,
   newProduct,
   updateProduct,
-} from "../controllers/product.js";
+} from "../controllers/product.controller.js";
 import { singleUpload } from "../middlewares/multer.js";
 
 const app = express.Router();

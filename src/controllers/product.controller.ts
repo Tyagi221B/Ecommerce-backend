@@ -5,7 +5,7 @@ import {
   NewProductRequestBody,
   SearchRequestQuery,
 } from "../types/types.js";
-import Product from "../models/product.js";
+import Product from "../models/product.model.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { rm } from "fs";
 import { myCache } from "../app.js";

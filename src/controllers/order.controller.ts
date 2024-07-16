@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { TryCatch } from "../middlewares/error.js";
 import { NewOrderRequestBody } from "../types/types.js";
-import { Order } from "../models/order.js";
+import { Order } from "../models/order.model.js";
 import { invalidateCache, reduceStock } from "../utils/features.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { myCache } from "../app.js";
