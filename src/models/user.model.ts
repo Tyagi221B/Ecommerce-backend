@@ -1,73 +1,82 @@
-import mongoose from "mongoose";
+import mongoose, {Document} from "mongoose";
 import validator from "validator";
+import jwt from "jsonwebtoken";
+
 
 interface IUser extends Document {
-  _id: string;
   name: string;
   email: string;
-  photo: string;
+  phone: string;
+  photo?: string;
   role: "admin" | "user";
-  gender: "male" | "female";
-  dob: Date;
+  refreshToken: string;
   createdAt: Date;
   updatedAt: Date;
-  //   Virtual Attribute
-  age: number;
+  generateAccessToken(): string;
+  generateRefreshToken(): string;
 }
 
-const schema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
-    _id: {
-      type: String,
-      required: [true, "Please enter ID"],
-    },
     name: {
       type: String,
       required: [true, "Please enter Name"],
     },
     email: {
       type: String,
-      unique: [true, "Email already Exist"],
-      required: [true, "Please enter Name"],
-      validate: validator.default.isEmail,
+      unique: [true, "User with this email already exists"],
+      required: [true, "Please enter Email"],
+      validate: [validator.isEmail, "Please enter a valid email"],
+    },
+    phone:{
+      type: String,
+      required: [true, "Please enter Phone Number"],
+      index: true,
     },
     photo: {
       type: String,
-      required: [true, "Please add Photo"],
     },
     role: {
       type: String,
       enum: ["admin", "user"],
       default: "user",
     },
-    gender: {
+    refreshToken: {
       type: String,
-      enum: ["male", "female"],
-      required: [true, "Please enter Gender"],
     },
-    dob: {
-      type: Date,
-      required: [true, "Please enter Date of birth"],
-    },
+    
   },
   {
     timestamps: true,
   }
 );
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+      {
+          _id: this._id,
+          email: this.email,
+          phone: this.phone,
+          name: this.name,
+      },
+      process.env.ACCESS_TOKEN_SECRET!,
+      {
+          expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      }
+  );
+};
 
-schema.virtual("age").get(function () {
-  const today = new Date();
-  const dob = this.dob;
-  let age = today.getFullYear() - dob.getFullYear();
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+      {
+          _id: this._id,
+      },
+      process.env.REFRESH_TOKEN_SECRET!,
+      {
+          expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+      }
+  );
+};
 
-  if (
-    today.getMonth() < dob.getMonth() ||
-    (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())
-  ) {
-    age--;
-  }
 
-  return age;
-});
+export const User = mongoose.model<IUser>("User", userSchema);
 
-export const User = mongoose.model<IUser>("User", schema);

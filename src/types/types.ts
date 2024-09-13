@@ -3,18 +3,65 @@ import { NextFunction, Request, Response } from "express";
 export interface NewUserRequestBody {
   name: string;
   email: string;
-  photo: string;
-  gender: string;
-  _id: string;
-  dob: Date;
+  phone:string;
 }
 
+// export interface NewProductRequestBody {
+//   name: string;
+//   category: string;
+//   price: number;
+//   stock: number;
+//   description: string;
+// }
+
 export interface NewProductRequestBody {
+  id: number;
   name: string;
-  category: string;
   price: number;
-  stock: number;
+  originalPrice: number;
+  images: string[];
   description: string;
+  size: {
+    height: number;
+    width: number;
+    length: number;
+  };
+  weight: {
+    net: number;
+    diamond: number;
+    gold: number;
+  };
+  purity: string;
+  basicInfo: {
+    productType: string;
+    brand: string;
+    itemPackageQuantity: number;
+    gender: string;
+  };
+  diamondInfo: {
+    color: string;
+    clarity: string;
+    caratWeight: number;
+    pieces: number;
+  };
+  metalInfo: {
+    purity: string;
+    metal: string;
+    netWeight: number;
+  };
+  certification: {
+    diamondCertification: string;
+    hallmarkLicense: string;
+  };
+  priceBreakup: {
+    component: string;
+    name: string;
+    rate: string;
+    weight: string;
+    discount: string;
+    finalValue: string;
+  }[];
+  tags: string[];
 }
 export interface NewCategoryRequestBody {
   name: string;

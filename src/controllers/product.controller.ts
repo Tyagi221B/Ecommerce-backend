@@ -82,34 +82,57 @@ export const getSingleProduct = TryCatch(async (req, res, next) => {
 
 export const newProduct = TryCatch(
   async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
-    const { name, price, stock, category, description } = req.body;
-    const photo = req.file;
-
-    if (!photo) return next(new ErrorHandler("Please add Photo", 400));
-
-    if (!name || !price || !stock || !category || !description) {
-      rm(photo.path, () => {
-        console.log("Failed to create new Product");
+    try {
+      const {
+        name,
+        description,
+        price,
+        originalPrice,
+        images,
+        size,
+        weight,
+        purity,
+        basicInfo,
+        diamondInfo,
+        metalInfo,
+        certification,
+        priceBreakup,
+        tags
+      } = req.body; // Destructure the incoming data from request body
+  
+      // Create a new product instance
+      const newProduct = new Product({
+        name,
+        description,
+        price,
+        originalPrice,
+        images,
+        size,
+        weight,
+        purity,
+        basicInfo,
+        diamondInfo,
+        metalInfo,
+        certification,
+        priceBreakup,
+        tags,
       });
-
-      return next(new ErrorHandler("Please enter All Fields", 400));
+  
+      // Save the new product to the database
+      const savedProduct = await newProduct.save();
+  
+      // Send a success response
+      res.status(201).json({
+        message: "Product created successfully",
+        product: savedProduct,
+      });
+    } catch (error: any) {
+      console.error("Error creating product:", error.message);
+      res.status(500).json({
+        message: "An error occurred while creating the product",
+        error: error.message,
+      });
     }
-
-    await Product.create({
-      name,
-      price,
-      stock,
-      category: category.toLowerCase(),
-      description,
-      photo: photo.path,
-    });
-
-    invalidateCache({ product: true, admin: true });
-
-    return res.status(201).json({
-      success: true,
-      message: "Product Created Successfully",
-    });
   }
 );
 
