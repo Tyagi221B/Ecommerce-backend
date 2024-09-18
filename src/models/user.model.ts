@@ -1,6 +1,7 @@
-import mongoose, {Document} from "mongoose";
+import mongoose, { Document, Types } from "mongoose";
 import validator from "validator";
 import jwt from "jsonwebtoken";
+
 
 
 interface IUser extends Document {
@@ -10,6 +11,7 @@ interface IUser extends Document {
   photo?: string;
   role: "admin" | "user";
   refreshToken: string;
+  addresses: Types.ObjectId[];  // Representing the references to the Address model
   createdAt: Date;
   updatedAt: Date;
   generateAccessToken(): string;
@@ -28,14 +30,17 @@ const userSchema = new mongoose.Schema(
       required: [true, "Please enter Email"],
       validate: [validator.isEmail, "Please enter a valid email"],
     },
-    phone:{
+    phone: {
       type: String,
       required: [true, "Please enter Phone Number"],
       index: true,
     },
-    photo: {
-      type: String,
-    },
+    addresses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Address",
+      },
+    ], // Optional, for population convenience
     role: {
       type: String,
       enum: ["admin", "user"],
@@ -44,12 +49,12 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    
   },
   {
     timestamps: true,
   }
 );
+
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
       {

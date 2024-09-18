@@ -5,6 +5,12 @@ export interface NewUserRequestBody {
   email: string;
   phone:string;
 }
+export interface EditUserInfoRequestBody {
+  _id: string;
+  name?: string;
+  email?: string;
+  phone?:string;
+}
 
 // export interface NewProductRequestBody {
 //   name: string;

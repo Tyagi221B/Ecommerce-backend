@@ -15,6 +15,7 @@ import paymentRoute from "./routes/payment.routes.js";
 import dashboardRoute from "./routes/stats.routes.js";
 import categoryRoute from "./routes/category.routes.js";
 import authRoutes from "./routes/authRoutes.routes.js";
+import addressRoutes from "./routes/address.routes.js";
 
 config({
   path: "./.env",
@@ -35,7 +36,14 @@ const app = express();
 
 app.use(express.json());
 // app.use(morgan("dev"));
-app.use(cors());
+app.use(
+  cors({
+      origin: process.env.CORS_ORIGIN,
+      credentials: true,
+  })
+
+);
+
 
 app.get("/", (req, res) => {
   res.send("API Working with /api/v1");
@@ -49,6 +57,7 @@ app.use("/api/v1/payment", paymentRoute);
 app.use("/api/v1/dashboard", dashboardRoute);
 app.use("/api/v1/category", categoryRoute);
 app.use('/api/v1/user', authRoutes);
+app.use('/api/v1/address', addressRoutes);
 
 app.use("/uploads", express.static("uploads"));
 app.use(errorMiddleware);

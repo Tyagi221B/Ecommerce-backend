@@ -1,6 +1,7 @@
 import express from "express";
 import {
   deleteUser,
+  editUserInfo,
   getAllUsers,
   getUser,
   registerUser,
@@ -20,5 +21,7 @@ app.get("/all", adminOnly, getAllUsers);
 // Route - /api/v1/user/dynamicID
 app.route("/:id").get(getUser).delete(adminOnly, deleteUser);
 app.get("/getuser/:phone", getUser)
+app.put('/:id', editUserInfo);
+
 
 export default app;
