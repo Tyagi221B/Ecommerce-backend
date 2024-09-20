@@ -6,5 +6,10 @@
 		"moduleResolution": "NodeNext",
     "outDir": "dist",
     "strict": true,
-	}
+		"baseUrl": "./",
+		"paths": {
+			"*": ["types/*"],
+		}
+	},
+	"include": ["src/**/*", "src/types/**/*", "src/types"]
 }

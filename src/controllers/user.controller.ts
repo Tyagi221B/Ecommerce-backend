@@ -65,7 +65,7 @@ export const registerUser = asyncHandler(
         httpOnly: true, // Prevents JavaScript access to cookies
         secure: process.env.NODE_ENV === 'production', // Secure in production (HTTPS)
         sameSite: 'strict', // Prevents CSRF attacks
-        maxAge: 1000 * 60 * 15, // Access token valid for 15 minutes
+        maxAge: 60 * 60 * 1000 * 24, // Access token valid for a day
       });
 
       res.cookie('refreshToken', refreshToken, {

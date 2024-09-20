@@ -56,6 +56,7 @@ export const updateAddress = async (req: Request, res: Response) => {
     const { addressId } = req.params;
     const { street, city, state, zipCode, country, phoneNumber, addressType, userId } = req.body;
 
+    console.log(req.body)
     if (!mongoose.Types.ObjectId.isValid(addressId) || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid address ID or user ID" });
     }
@@ -145,7 +146,6 @@ export const updateAddress = async (req: Request, res: Response) => {
 export const deleteAddress = async (req: Request, res: Response) => {
   const { addressId } = req.params;
   const { userId } = req.body;  // Assuming userId is passed in the request body or from authentication
-
   try {
     // Validate addressId and userId
     if (!mongoose.Types.ObjectId.isValid(addressId) || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -185,10 +185,11 @@ export const deleteAddress = async (req: Request, res: Response) => {
 };
 
 // Get all addresses for a user
+
 export const getAddressesForUser = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    console.log(userId);
+    // console.log(userId);
 
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(userId)) {
