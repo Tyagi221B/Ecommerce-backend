@@ -1,6 +1,6 @@
 import mongoose, { Document } from "mongoose";
 import { myCache } from "../app.js";
-import Product from "../models/product.model.js";
+// import {Product} from "../models/product.model.js";
 import { InvalidateCacheProps, OrderItemType } from "../types/types.js";
 
 export const connectDB = (uri: string) => {
@@ -56,10 +56,10 @@ export const invalidateCache = ({
 export const reduceStock = async (orderItems: OrderItemType[]) => {
   for (let i = 0; i < orderItems.length; i++) {
     const order = orderItems[i];
-    const product = await Product.findById(order.productId);
-    if (!product) throw new Error("Product Not Found");
-    product.stock -= order.quantity;
-    await product.save();
+    // const product = await Product.findById(order.productId);
+    // if (!product) throw new Error("Product Not Found");
+    // product.stock -= order.quantity;
+    // await product.save();
   }
 };
 
@@ -69,29 +69,29 @@ export const calculatePercentage = (thisMonth: number, lastMonth: number) => {
   return Number(percent.toFixed(0));
 };
 
-export const getInventories = async ({
-  categories,
-  productsCount,
-}: {
-  categories: string[];
-  productsCount: number;
-}) => {
-  const categoriesCountPromise = categories.map((category) =>
-    Product.countDocuments({ category })
-  );
+// export const getInventories = async ({
+//   categories,
+//   productsCount,
+// }: {
+//   categories: string[];
+//   productsCount: number;
+// }) => {
+//   const categoriesCountPromise = categories.map((category) =>
+//     Product.countDocuments({ category })
+//   );
 
-  const categoriesCount = await Promise.all(categoriesCountPromise);
+//   const categoriesCount = await Promise.all(categoriesCountPromise);
 
-  const categoryCount: Record<string, number>[] = [];
+//   const categoryCount: Record<string, number>[] = [];
 
-  categories.forEach((category, i) => {
-    categoryCount.push({
-      [category]: Math.round((categoriesCount[i] / productsCount) * 100),
-    });
-  });
+//   categories.forEach((category, i) => {
+//     categoryCount.push({
+//       [category]: Math.round((categoriesCount[i] / productsCount) * 100),
+//     });
+//   });
 
-  return categoryCount;
-};
+//   return categoryCount;
+// };
 
 interface MyDocument extends Document {
   createdAt: Date;

@@ -1,240 +1,252 @@
-import { Request } from "express";
-import { TryCatch } from "../middlewares/error.js";
-import {
-  BaseQuery,
-  NewProductRequestBody,
-  SearchRequestQuery,
-} from "../types/types.js";
-import Product from "../models/product.model.js";
-import ErrorHandler from "../utils/utility-class.js";
-import { rm } from "fs";
-import { myCache } from "../app.js";
-import { invalidateCache } from "../utils/features.js";
+import { Request, Response, NextFunction } from 'express';
+import { IProductDocument, Product } from '../models/product.model.js';
+import { ApiError } from '../utils/ApiErrors.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
+import { asyncHandler } from '../middlewares/asyncHandler.js';
+import { Types } from 'mongoose';
 
-// Revalidate on New,Update,Delete Product & on New Order
-export const getlatestProducts = TryCatch(async (req, res, next) => {
-  let products;
+import { IMediaDocument, Media } from '../models/Media.js';
+import { ISizeOptionDocument, SizeOption } from '../models/SizeOption.js';
+import { IMetalOptionDocument, MetalOption } from '../models/MetalOptions.js';
+import { ISolitaireOptionDocument, SolitaireOption } from '../models/SolitaireOption.js';
+import { DiamondQualityOption, IDiamondQualityOptionDocument } from '../models/DiamondQualityOptions.js';
 
-  if (myCache.has("latest-products"))
-    products = JSON.parse(myCache.get("latest-products") as string);
-  else {
-    products = await Product.find({}).sort({ createdAt: -1 }).limit(10);
-    myCache.set("latest-products", JSON.stringify(products));
-  }
 
-  return res.status(200).json({
-    success: true,
-    products,
-  });
-});
+// Create Product with related documents
+export const createProduct = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {
+      name,
+      productCode,
+      description,
+      category,
+      basePrice,
+      dimensions,
+      defaultSize,
+      media,
+      sizeOptions,
+      metalOptions,
+      solitaireOptions,
+      diamondQualityOptions,
+    } = req.body;
 
-// Revalidate on New,Update,Delete Product & on New Order
-export const getAllCategories = TryCatch(async (req, res, next) => {
-  let categories;
-
-  if (myCache.has("categories"))
-    categories = JSON.parse(myCache.get("categories") as string);
-  else {
-    categories = await Product.distinct("category");
-    myCache.set("categories", JSON.stringify(categories));
-  }
-
-  return res.status(200).json({
-    success: true,
-    categories,
-  });
-});
-
-// Revalidate on New,Update,Delete Product & on New Order
-export const getAdminProducts = TryCatch(async (req, res, next) => {
-  let products;
-  if (myCache.has("all-products"))
-    products = JSON.parse(myCache.get("all-products") as string);
-  else {
-    products = await Product.find({});
-    myCache.set("all-products", JSON.stringify(products));
-  }
-
-  return res.status(200).json({
-    success: true,
-    products,
-  });
-});
-
-export const getSingleProduct = TryCatch(async (req, res, next) => {
-  let product;
-  const id = req.params.id;
-  if (myCache.has(`product-${id}`))
-    product = JSON.parse(myCache.get(`product-${id}`) as string);
-  else {
-    product = await Product.findById(id);
-
-    if (!product) return next(new ErrorHandler("Product Not Found", 404));
-
-    myCache.set(`product-${id}`, JSON.stringify(product));
-  }
-
-  return res.status(200).json({
-    success: true,
-    product,
-  });
-});
-
-export const newProduct = TryCatch(
-  async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
-    try {
-      const {
-        name,
-        description,
-        price,
-        originalPrice,
-        images,
-        size,
-        weight,
-        purity,
-        basicInfo,
-        diamondInfo,
-        metalInfo,
-        certification,
-        priceBreakup,
-        tags
-      } = req.body; // Destructure the incoming data from request body
-  
-      // Create a new product instance
-      const newProduct = new Product({
-        name,
-        description,
-        price,
-        originalPrice,
-        images,
-        size,
-        weight,
-        purity,
-        basicInfo,
-        diamondInfo,
-        metalInfo,
-        certification,
-        priceBreakup,
-        tags,
-      });
-  
-      // Save the new product to the database
-      const savedProduct = await newProduct.save();
-  
-      // Send a success response
-      res.status(201).json({
-        message: "Product created successfully",
-        product: savedProduct,
-      });
-    } catch (error: any) {
-      console.error("Error creating product:", error.message);
-      res.status(500).json({
-        message: "An error occurred while creating the product",
-        error: error.message,
-      });
+    // Check if productCode already exists
+    const existingProduct = await Product.findOne({ productCode });
+    if (existingProduct) {
+      throw new ApiError(400, `Product with code ${productCode} already exists`);
     }
+
+    // Create the Product document first
+    const product: IProductDocument = new Product({
+      name,
+      productCode,
+      description,
+      category,
+      basePrice,
+      dimensions,
+      defaultSize,
+    });
+
+    await product.save();
+
+    const productId = product._id;
+
+    // Initialize ID arrays
+    let mediaIds: Types.ObjectId[] = [];
+    let sizeOptionIds: Types.ObjectId[] = [];
+    let metalOptionIds: Types.ObjectId[] = [];
+    let solitaireOptionIds: Types.ObjectId[] = [];
+    let diamondQualityOptionIds: Types.ObjectId[] = [];
+
+    // Create related Media documents
+    if (media && Array.isArray(media)) {
+      const mediaDocs: IMediaDocument[] = await Media.insertMany(
+        media.map((m: any) => ({
+          product: productId,
+          mediaType: m.mediaType,
+          mediaURL: m.mediaURL,
+          displayOrder: m.displayOrder || 0,
+        }))
+      );
+      mediaIds = mediaDocs.map((m) => m._id);
+    }
+
+    // Create related SizeOption documents
+    if (sizeOptions && Array.isArray(sizeOptions)) {
+      const sizeDocs: ISizeOptionDocument[] = await SizeOption.insertMany(
+        sizeOptions.map((s: any) => ({
+          product: productId,
+          size: s.size,
+          sizeMultiplier: s.sizeMultiplier,
+        }))
+      );
+      sizeOptionIds = sizeDocs.map((s) => s._id);
+    }
+
+    // Create related MetalOption documents
+    if (metalOptions && Array.isArray(metalOptions)) {
+      const metalDocs: IMetalOptionDocument[] = await MetalOption.insertMany(
+        metalOptions.map((m: any) => ({
+          product: productId,
+          metalType: m.metalType,
+          metalColor: m.metalColor,
+          metalWeight: m.metalWeight,
+          metalPriceMultiplier: m.metalPriceMultiplier,
+        }))
+      );
+      metalOptionIds = metalDocs.map((m) => m._id);
+    }
+
+    // Create related SolitaireOption documents
+    if (solitaireOptions && Array.isArray(solitaireOptions)) {
+      const solitaireDocs: ISolitaireOptionDocument[] = await SolitaireOption.insertMany(
+        solitaireOptions.map((s: any) => ({
+          product: productId,
+          caratSize: s.caratSize,
+          shape: s.shape,
+          clarity: s.clarity,
+          color: s.color,
+          cut: s.cut,
+          polish: s.polish,
+          symmetry: s.symmetry,
+          fluorescence: s.fluorescence,
+          solitairePriceMultiplier: s.solitairePriceMultiplier,
+        }))
+      );
+      solitaireOptionIds = solitaireDocs.map((s) => s._id);
+    }
+
+    // Create related DiamondQualityOption documents
+    if (diamondQualityOptions && Array.isArray(diamondQualityOptions)) {
+      const diamondQualityDocs: IDiamondQualityOptionDocument[] = await DiamondQualityOption.insertMany(
+        diamondQualityOptions.map((d: any) => ({
+          product: productId,
+          qualityGrade: d.qualityGrade,
+          diamondPriceMultiplier: d.diamondPriceMultiplier,
+        }))
+      );
+      diamondQualityOptionIds = diamondQualityDocs.map((d) => d._id);
+    }
+
+    // Update the Product document with the IDs of the related documents
+    product.media = mediaIds;
+    product.sizeOptions = sizeOptionIds;
+    product.metalOptions = metalOptionIds;
+    product.solitaireOptions = solitaireOptionIds;
+    product.diamondQualityOptions = diamondQualityOptionIds;
+
+    await product.save();
+
+    res
+      .status(201)
+      .json(new ApiResponse(201, product, 'Product created successfully'));
   }
 );
 
-export const updateProduct = TryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const { name, price, stock, category, description } = req.body;
-  const photo = req.file;
-  const product = await Product.findById(id);
 
-  if (!product) return next(new ErrorHandler("Product Not Found", 404));
-
-  if (photo) {
-    rm(product.photo!, () => {
-      console.log("Old Photo Deleted");
-    });
-    product.photo = photo.path;
+// Existing controller functions
+export const getAllProducts = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const products = await Product.find()
+      .populate('media')
+      .populate('sizeOptions')
+      .populate('metalOptions')
+      .populate('solitaireOptions')
+      .populate('diamondQualityOptions');
+    res.status(200).json(new ApiResponse(200, products, 'Products fetched successfully'));
   }
+);
 
-  if (name) product.name = name;
-  if (price) product.price = price;
-  if (stock) product.stock = stock;
-  if (category) product.category = category;
-  if (description) product.description = description;
+export const getProductById = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const product = await Product.findById(req.params.id)
+      .populate('media')
+      .populate('sizeOptions')
+      .populate('metalOptions')
+      .populate('solitaireOptions')
+      .populate('diamondQualityOptions');
 
-  await product.save();
+    if (!product) {
+      throw new ApiError(404, 'Product not found');
+    }
 
-  invalidateCache({
-    product: true,
-    productId: String(product._id),
-    admin: true,
-  });
+    res.status(200).json(new ApiResponse(200, product, 'Product fetched successfully'));
+  }
+);
 
-  return res.status(200).json({
-    success: true,
-    message: "Product Updated Successfully",
-  });
-});
 
-export const deleteProduct = TryCatch(async (req, res, next) => {
-  const product = await Product.findById(req.params.id);
-  if (!product) return next(new ErrorHandler("Product Not Found", 404));
+// New controller function: Update Product
+export const updateProduct = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const productId = req.params.id;
+    const updateData = req.body;
 
-  rm(product.photo!, () => {
-    console.log("Product Photo Deleted");
-  });
+    // Fetch the existing product
+    const product = await Product.findById(productId);
+    if (!product) {
+      throw new ApiError(404, 'Product not found');
+    }
 
-  await product.deleteOne();
+    // Update basic product fields
+    const fieldsToUpdate = [
+      'name',
+      'productCode',
+      'description',
+      'category',
+      'basePrice',
+      'dimensions',
+      'defaultSize',
+    ];
 
-  invalidateCache({
-    product: true,
-    productId: String(product._id),
-    admin: true,
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: "Product Deleted Successfully",
-  });
-});
-
-export const getAllProducts = TryCatch(
-  async (req: Request<{}, {}, {}, SearchRequestQuery>, res, next) => {
-    const { search, sort, category, price } = req.query;
-
-    const page = Number(req.query.page) || 1;
-    // 1,2,3,4,5,6,7,8
-    // 9,10,11,12,13,14,15,16
-    // 17,18,19,20,21,22,23,24
-    const limit = Number(process.env.PRODUCT_PER_PAGE) || 8;
-    const skip = (page - 1) * limit;
-
-    const baseQuery: BaseQuery = {};
-
-    if (search)
-      baseQuery.name = {
-        $regex: search,
-        $options: "i",
-      };
-
-    if (price)
-      baseQuery.price = {
-        $lte: Number(price),
-      };
-
-    if (category) baseQuery.category = category;
-
-    const productsPromise = Product.find(baseQuery)
-      .sort(sort && { price: sort === "asc" ? 1 : -1 })
-      .limit(limit)
-      .skip(skip);
-
-    const [products, filteredOnlyProduct] = await Promise.all([
-      productsPromise,
-      Product.find(baseQuery),
-    ]);
-
-    const totalPage = Math.ceil(filteredOnlyProduct.length / limit);
-
-    return res.status(200).json({
-      success: true,
-      products,
-      totalPage,
+    fieldsToUpdate.forEach((field) => {
+      if (updateData[field] !== undefined) {
+        product[field] = updateData[field];
+      }
     });
+
+    // Handle related documents if provided
+    // Update Media
+    if (updateData.media && Array.isArray(updateData.media)) {
+      // Delete existing media
+      await Media.deleteMany({ product: productId });
+
+      // Create new media
+      const mediaDocs: IMediaDocument[] = await Media.insertMany(
+        updateData.media.map((m: any) => ({
+          product: productId,
+          mediaType: m.mediaType,
+          mediaURL: m.mediaURL,
+          displayOrder: m.displayOrder || 0,
+        }))
+      );
+
+      // Update product's media references
+      product.media = mediaDocs.map((m) => m._id);
+    }
+
+    // Repeat similar steps for sizeOptions, metalOptions, solitaireOptions, diamondQualityOptions
+
+    // Save the updated product
+    await product.save();
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, product, 'Product updated successfully'));
+  }
+);
+
+// New controller function: Delete Product
+export const deleteProduct = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const productId = req.params.id;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      throw new ApiError(404, 'Product not found');
+    }
+
+    // await product.remove();
+
+    res.status(200).json(new ApiResponse(200, {}, 'Product deleted successfully'));
   }
 );

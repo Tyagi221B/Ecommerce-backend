@@ -3,7 +3,7 @@ import { User } from "../models/user.model.js";
 import { NewUserRequestBody, EditUserInfoRequestBody } from "../types/types.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { ApiError } from "../utils/ApiErrors.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
@@ -157,31 +157,26 @@ export const editUserInfo = asyncHandler(
   async (
     req, res, next
   ) => {
-    const { id } = req.params; // ID comes from the URL params
-    const { name, email, phone } = req.body; // Editable fields come from the request body
+    const { id } = req.params; 
+    const { name, email, phone } = req.body; 
 
-    // Validate input: Make sure at least one field is provided
     if (!name && !email && !phone) {
       throw new ApiError(400, 'Please provide at least one field to update: name, email, or phone');
     }
 
     try {
-      // Find the user by their ID
       const user = await User.findById(id);
 
       if (!user) {
         throw new ApiError(404, 'User not found');
       }
 
-      // Update the user with the provided fields
       if (name) user.name = name;
       if (email) user.email = email;
       if (phone) user.phone = phone;
 
-      // Save the updated user to the database
       await user.save();
 
-      // Send a success response with the updated user details
       const response = new ApiResponse(
         200,
         { id: user._id, name: user.name, email: user.email, phone: user.phone },
@@ -189,7 +184,6 @@ export const editUserInfo = asyncHandler(
       );
       return res.status(response.statusCode).json(response);
     } catch (error) {
-      // Handle errors (e.g., database errors, validation errors)
       if (error instanceof Error) {
         next(new ApiError(500, 'Error updating user information', [error.message]));
       } else {

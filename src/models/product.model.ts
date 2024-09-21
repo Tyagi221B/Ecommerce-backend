@@ -1,109 +1,48 @@
-import mongoose from "mongoose";
+// models/Product.ts
+import { Schema, model, Types, HydratedDocument } from 'mongoose';
 
-const productSchema = new mongoose.Schema({
-  // Basic product information
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  description: {
-    type: String,
-    trim: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-    min: 0,
-  },
-  originalPrice: {
-    type: Number,
-    min: 0,
-  },
-  images: {
-    type: [String],
-    required: true,
-  },
-  size: {
-    type: {
-      height: Number,
-      width: Number,
-      length: Number,
-    },
-    required: true,
-  },
-  weight: {
-    type: {
-      net: Number,
-      diamond: Number,
-      gold: Number,
-    },
-    required: true,
-  },
-  purity: {
-    type: String,
-    required: true,
-  },
+export interface IProduct {
+  name: string;
+  productCode: string;
+  description: string;
+  stock?: string;
+  category: string;
+  basePrice: number;
+  dimensions: {
+    height: number;
+    width: number;
+    weight: number;
+  };
+  defaultSize: string;
+  createdDate: Date;
+  media: Types.ObjectId[];
+  sizeOptions: Types.ObjectId[];
+  metalOptions: Types.ObjectId[];
+  solitaireOptions: Types.ObjectId[];
+  diamondQualityOptions: Types.ObjectId[];
+}
 
-  // Additional product details
-  basicInfo: {
-    type: {
-      productType: String,
-      brand: String,
-      itemPackageQuantity: Number,
-      gender: String,
-    },
-    required: true,
-  },
-  diamondInfo: {
-    type: {
-      color: String,
-      clarity: String,
-      caratWeight: Number,
-      pieces: Number,
-    },
-    required: true,
-  },
-  metalInfo: {
-    type: {
-      purity: String,
-      metal: String,
-      netWeight: Number,
-    },
-    required: true,
-  },
-  certification: {
-    type: {
-      diamondCertification: String,
-      hallmarkLicense: String,
-    },
-    required: true,
-  },
-  priceBreakup: {
-    type: [{
-      component: String,
-      name: String,
-      rate: String,
-      weight: String,
-      discount: String,
-      finalValue: String,
-    }],
-    required: true,
-  },
-  tags: {
-    type: [String],
-  },
+export type IProductDocument = HydratedDocument<IProduct>;
 
-  // Timestamps for tracking creation and modification
-  createdAt: {
-    type: Date,
-    default: Date.now,
+const ProductSchema = new Schema<IProduct>({
+  name: { type: String, required: true },
+  productCode: { type: String, required: true, unique: true },
+  description: String,
+  stock: String,
+  category: String,
+  basePrice: Number,
+  dimensions: {
+    height: Number,
+    width: Number,
+    weight: Number,
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
+  defaultSize: String,
+  createdDate: { type: Date, default: Date.now },
+  media: [{ type: Schema.Types.ObjectId, ref: 'Media' }],
+  sizeOptions: [{ type: Schema.Types.ObjectId, ref: 'SizeOption' }],
+  metalOptions: [{ type: Schema.Types.ObjectId, ref: 'MetalOption' }],
+  solitaireOptions: [{ type: Schema.Types.ObjectId, ref: 'SolitaireOption' }],
+  diamondQualityOptions: [{ type: Schema.Types.ObjectId, ref: 'DiamondQualityOption' }],
 });
 
-const Product = mongoose.model("Product", productSchema);
-export default Product;
+export const Product = model<IProduct>('Product', ProductSchema);

@@ -1,39 +1,68 @@
 import express from "express";
 import { adminOnly } from "../middlewares/auth.js";
-import {
-  deleteProduct,
-  getAdminProducts,
-  getAllCategories,
-  getAllProducts,
-  getSingleProduct,
-  getlatestProducts,
-  newProduct,
-  updateProduct,
-} from "../controllers/product.controller.js";
+
 import { singleUpload } from "../middlewares/multer.js";
 
 const app = express.Router();
 
-//To Create New Product  - /api/v1/product/new
-app.post("/new", adminOnly, singleUpload, newProduct);
+import {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from '../controllers/product.controller.js';
 
-//To get all Products with filters  - /api/v1/product/all
-app.get("/all", getAllProducts);
+// @route   GET /api/products
+// @desc    Get all products
+app.get('/all', getAllProducts);
 
-//To get last 10 Products  - /api/v1/product/latest
-app.get("/latest", getlatestProducts);
+// @route   GET /api/products/:id
+// @desc    Get product by ID
+app.get('/:id', getProductById);
 
-//To get all unique Categories  - /api/v1/product/categories
-app.get("/categories", getAllCategories);
+// @route   POST /api/products
+// @desc    Create a new product
+app.post('/new', createProduct);
 
-//To get all Products   - /api/v1/product/admin-products
-app.get("/admin-products", adminOnly, getAdminProducts);
+// @route   PUT /api/products/:id
+// @desc    Update a product
+app.put('/:id', updateProduct);
+
+// @route   DELETE /api/products/:id
+// @desc    Delete a product
+app.delete('/:id', deleteProduct);
+
 
 // To get, update, delete Product
-app
-  .route("/:id")
-  .get(getSingleProduct)
-  .put(adminOnly, singleUpload, updateProduct)
-  .delete(adminOnly, deleteProduct);
+// app
+//   .route("/:id")
+//   .get(getSingleProduct)
+//   .put(adminOnly, singleUpload, updateProduct)
+//   .delete(adminOnly, deleteProduct);
 
 export default app;
+
+
+// import { validateRequest } from '../middlewares/validateRequest';
+// import { createProductValidator, updateProductValidator } from '../middlewares/validators/productValidator';
+
+// // ...
+
+// router.post('/', createProductValidator, validateRequest, asyncHandler(createProduct));
+
+// router.post(
+//   '/',
+//   createProductValidator,  // Apply creation validators
+//   validateRequest,        // Validate the request
+//   asyncHandler(createProduct)
+// );
+
+// // @route   PUT /api/products/:id
+// // @desc    Update a product
+// router.put(
+//   '/:id',
+//   updateProductValidator,  // Apply update validators
+//   validateRequest,        // Validate the request
+//   asyncHandler(updateProduct)
+// );
